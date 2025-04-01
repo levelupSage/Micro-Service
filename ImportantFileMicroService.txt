@@ -1,0 +1,33 @@
+
+
+
+
+
+3rd Step Zipkin Server
+
+1. Download the jar 
+	zipkin downloads ( https://zipkin.io/pages/quickstart.html )
+	
+2. Run the zipkin server jar file using this commands
+
+	# java -jar <jarName>.jar
+	
+
+4th Step Develop Rest API (Create Welcome API)
+
+	i. create boot application with below dependencies
+		-eureka-discovery client
+		-admin-client
+		-zikin
+		-sleuth (Logging Purpose)
+		-devtools
+		-actuator (Moniter and Manage over Application)
+
+	ii. configure @EnableDiscoveryClient annotation at start class (It will search and register with eureka)
+	
+	iii. create Rest controller with required method 	
+
+	iv. configure below properties in application.yml
+		-server port
+		-admin server url
+		-actuator end Points
