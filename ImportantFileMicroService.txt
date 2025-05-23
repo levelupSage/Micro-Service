@@ -1,7 +1,8 @@
 
 
+type gradle-8.14-bin.zip.sha256
 
-
+certutil -hashfile gradle-8.14-bin.zip.sha256
 
 3rd Step Zipkin Server
 
@@ -31,3 +32,61 @@
 		-server port
 		-admin server url
 		-actuator end Points
+		
+5th. step Develop Rest API (Create Greet API)
+
+	i. create boot application with below dependencies
+		-eureka-discovery client
+		-admin-client
+		-zikin
+		-sleuth (Logging Purpose)
+		-devtools
+		-actuator (Moniter and Manage over Application)
+		-fegin client (To inter communicate services)
+
+	ii. configure @EnableDiscoveryClient annotation at start class (It will search and register with eureka)
+	
+		
+	iii. Create FeginClient to access Welcome-API
+	
+	iv. create Rest controller with required method 	
+
+
+	v. configure below properties in application.yml
+		-server port
+		-admin server url
+		-actuator end Points
+		
+--------------------------------------------------------API Gateway --------------
+
+Api Gateway will act as an entry point for our backend apis.
+
+	1.	create boot application with below dependencies
+		-cloud-gateway
+		-eureka-client
+		-web-starter
+		-devtools
+	2. configure @EnableDiscoveryClient annotation at boot start class
+	
+	3. configure the server port and API Routings in application.yml file
+	
+server:
+	port: 3333
+spring:
+  application:
+    name: API-GATEWAY
+  cloud:
+    gateway:
+      discovery:
+        locator:
+          enabled: true
+          lower-case-service-id: true
+      routes:
+      - id: one
+        uri: lb://WELCOME-API
+        predicates:
+          - Path=/welcome
+      - id: two
+        uri: lb://GREET-API
+        predicates:
+            - Path=/greet
