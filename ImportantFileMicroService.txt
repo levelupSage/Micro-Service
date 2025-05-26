@@ -1,9 +1,200 @@
++++++++++++++++++++++++
+Monlith Vs Microservices
++++++++++++++++++++++++
+
+Application can be developed in 2 ways
+
+1) Monolith Architecture
+
+2) Microservices Architecture
+
+-> If we develop all the functionalities in one single application then it is called as Monolith Application
+
+++++++++++
+Advantages
+++++++++++
+1) Development is easy
+2) Deployment is easy
+3) Performance
+4) Easy Testing
+5) Easy Debugging
+6) KT is easy
+
+++++++++++++++
+Dis-Advantages
+++++++++++++++
+
+1) Single point of failure
+2) Whole Application Re-Deployment
+3) Scalability ( Increasing & Decreasing resources based on demand )
+4) Reliability (Strong)
+5) Availability (Zero Downtime)
+
+=> If we develop the functionalities in multiple services/apis then it is called as Microservices Architecture Based Application.
+
+=> Every Microservice will have its own goal
+
+++++++++++
+Advantages
+++++++++++
+
+1) Loosely coupled
+2) Fast Development
+3) Quick Releases
+4) Flexibility
+5) Scalability
+6) No Single Point of failure
+7) Technology independence
 
 
-type gradle-8.14-bin.zip.sha256
+++++++++++++++
+Challenges
+++++++++++++++
 
-certutil -hashfile gradle-8.14-bin.zip.sha256
+1) Bounded context (identifying no.of services to develop)
 
+2) Lot of configurations
+
+3) Visibility
+
+4) Testing is difficult
+
+5) Debugging
+
+
+
+########################
+Microservices Architecture
+########################
+
+-> Microservices is an architectural design pattern to develop our applications
+
+-> There is no fixed architecture for Microservices Based Applications
+
+-> People are customizing Microservices Architecture according to their requirement
+
+
+*********** Let us see generalized architecture of Microservices ***************
+
+
+1) Service Registry
+
+2) Admin Server
+
+3) Zipkin Server
+
+4)  Services (REST APIs)
+
+5) FeignClient
+
+6) API Gateway
+
+
+
+
+-> ServiceRegistry is used to register all our backend services/apis
+-> Service Registry will maintain services names, urls and status of each service
+-> We can use EurekaServer as a service registry
+
+Note: EurekaServer provided by Spring Cloud Netflix Library
+
+
+-> AdminServer is used to monitor and manage all our backend services at one place
+-> AdminServer will provide user interface to monitor and manage our services
+-> Using AdminServer user interface we can access Actuator Endpoints of our services at one place
+
+Note: AdminServer and Admin Client provided by 'Code Centric' company (we can integrate with boot)
+
+
+-> ZipkinServer is used for Distributed Log Tracing
+-> ZipkinServer will provide user interface to monitor application execution details
+-> How many services involved and which service took more time to process the request can be monitored using Zipkin
+
+Note: Zipkin is third party open source server (can be integrated with spring boot)
+
+
+-> Backend services are nothing but REST APIs (which are also called as Microservices)
+-> Backend REST APIs contains actual business logic of our application
+-> One project will have multiple REST APIs in the backend
+-> Each Backend api will act as client for Service Registry + Admin Server + Zipkin Server
+
+
+-> With in the same application If one backend api communicating with another backend api  then it is called as Interservice communication
+
+-> FeignClient will be used to perform Interservice Communication
+
+
+Note: Based on requirement our backend apis can communicate with 3 rd party apis using RestTemplate or WebClient
+
+
+
+-> Api Gateway will act as an Entry point for our backend apis
+-> It acts as mediator between endusers and backend apis
+-> API Gateway contains Filters and Routing
+-> Filters we can use to authenticate incoming requests
+-> Routing will decide which request should go to which backend api
+
+Note: In previous versions we have Zuul Proxy as API Gateway but now it got removed from latest version of boot
+
+-> Spring Cloud Gateway we can use as API Gateway for our application
+
+
+
+
+#####################################
+Microservices Mini Project Implementation
+#####################################
+
+*********** Step- 1) Create Service Registry Application using Eureka Server *******************
+
+
+1) Create Spring Boot app with below dependencies
+
+ 		a) 'Spring-cloud-starter-netflix-eureka-server' 
+		b) web starter
+		c) devtools
+
+2) Configure @EnableEurekaServer annotation at boot start class
+
+3) Configure below properties in application.yml file
+
+server:
+  port: 8761
+
+eureka:
+  client:
+    register-with-eureka: false
+
+4) Run the application and access in browser
+
+		URL : http://localhost:8761/
+
+
+
+*************************** Step-2 ) Create Spring Boot Application with Admin Server ************************************
+
+
+1) Create Boot application with below dependencies
+
+	a) web-starter
+	b) devtools
+	c) admin-server (code centric)
+
+2) Configure @EnableAdminServer annotation at boot start class
+
+3)  Configure Embedded Container Port Number (we can use any port)
+
+4)  Run the application and access the application in browser
+
+		URL : http://localhost:port/
+		
+	
+-------------------------------------------------
+
+--type gradle-8.14-bin.zip.sha256
+
+--certutil -hashfile gradle-8.14-bin.zip.sha256
+------------------------------------------------------------------------
 3rd Step Zipkin Server
 
 1. Download the jar 
@@ -12,6 +203,7 @@ certutil -hashfile gradle-8.14-bin.zip.sha256
 2. Run the zipkin server jar file using this commands
 
 	# java -jar <jarName>.jar
+	# download this version zipkin-server-3.5.0-exec
 	
 
 4th Step Develop Rest API (Create Welcome API)
@@ -90,3 +282,58 @@ spring:
         uri: lb://GREET-API
         predicates:
             - Path=/greet
+
+------------------------------------------------------
+
+Filters Using API-GATEWAY
+
+fiter are used to perform are pre-processing and post-processing the request.
+
+-> if user want to complete access from the request using GlobalFilter.
+-> we can access client sent infromation using filter.
+-> the cleint request infromation we can you to validate that request.
+
+-> create below filter in api-gateway (It will execute for every request)
+
+@Component
+public class MyPreFilter implements GlobalFilter {
+
+    Logger logger = LoggerFactory.getLogger(MyPreFilter.class);
+
+    @Override
+    public Mono<Void> filter(ServerWebExchange exchange, GatewayFilterChain chain) {
+
+        logger.info("filter() executed....");
+
+        ServerHttpRequest serverHttpRequest = exchange.getRequest();
+
+        HttpHeaders headers = serverHttpRequest.getHeaders();
+
+        Set<String> keySet = headers.keySet();
+
+        keySet.forEach(key -> {
+            List<String> list = headers.get(key);
+            System.out.println(key + "::" + list);
+        });
+        return chain.filter(exchange);
+    }
+}
+
+-------------------------------
+-> when we sent request rest-api usnig postman, it will send postman token request header. using this token we can differentiate request came from other apllication
+or postman.
+
+
+-------------------------------- Load Balancing -----------------------------
+
+load Balancing is the process of distributing load to multiple servers
+
+-> if we run our application on single server than all requests will be sent to single server.
+-> Burden will be increased on the sever 
+-> when burden got increased request processing gets delayed
+-> Sometimes our server might crash due to heavy load 
+
+---------------- To overcome above problems we will use load balancing concept --------------
+
+-> Load blancing is the process of distributingloat to mutiple severs 
+-> 
